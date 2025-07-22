@@ -17,6 +17,21 @@ resource "aws_launch_template" "app" {
     security_groups            = [aws_security_group.app.id]
     associate_public_ip_address = false
   }
+
+    user_data = base64encode(<<-EOF
+     #!/bin/bash
+
+    yum update -y
+    yum install -y git python3-pip curl
+    git clone https://github.com/ArturBandeira/RESTful-API.git
+    cd RESTful-API/RESTful/clientes_API
+    sudo pip3 install Flask flask-cors flask-httpauth werkzeug pymysql Flask-MySQL 
+    cd /home/ec2-user
+    sudo nohup python3 main.py --host=0.0.0.0 --port=80 > /var/log/clientes_api.log 2>&1 &
+     
+EOF
+  )
+
   tag_specifications {
     resource_type = "instance"
     tags = {

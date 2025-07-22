@@ -1,0 +1,4 @@
+{
+  "MinHealthyPercentage": 90,
+  "InstanceWarmup": 300
+} 

@@ -19,9 +19,9 @@ resource "aws_lb_target_group" "app" {
   health_check {
     path                = "/"
     healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 30
+    unhealthy_threshold = 5
+    timeout             = 10
+    interval            = 60
   }
 
   tags = {

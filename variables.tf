@@ -32,7 +32,7 @@ variable "centrodecusto" {
 variable "schedule" {
   description = "Tag de agendamento de uso das instâncias (shutdown|everydayhours|officehours|weekendshours|online)"
   type        = string
-  default     = "shutdown"
+  default     = "online"
 }
 
 # EC2 Application Instance Type

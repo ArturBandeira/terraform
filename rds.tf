@@ -5,6 +5,7 @@ resource "aws_db_subnet_group" "db" {
 
   tags = {
     Owner = var.owner_tag
+    # CENTRODECUSTO removido intencionalmente
   }
 }
 
@@ -25,6 +26,7 @@ resource "aws_db_instance" "rds" {
 
   tags = {
     Owner = var.owner_tag
+    # CENTRODECUSTO removido intencionalmente
   }
 
   timeouts {
