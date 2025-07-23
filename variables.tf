@@ -76,5 +76,5 @@ variable "db_password" {
 variable "owner_tag" {
   description = "Identifier for resource owner"
   type        = string
-  default     = "Developer2_84263f1c06dd171d"
+  default     = "Developer2-765732380112"
 }

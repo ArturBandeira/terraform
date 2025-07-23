@@ -18,15 +18,42 @@ resource "aws_launch_template" "app" {
     associate_public_ip_address = false
   }
 
-    user_data = base64encode(<<-EOF
-     #!/bin/bash
-
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    cd /home/ec2-user
     yum update -y
-    yum install -y git python3-pip curl
+    yum install -y git python3-pip curl mysql
+  
+    # Clonar repositório
     git clone https://github.com/ArturBandeira/RESTful-API.git
     cd RESTful-API/RESTful/clientes_API
+    
+    # Instalar dependências Python
     sudo pip3 install Flask flask-cors flask-httpauth werkzeug pymysql Flask-MySQL 
-    cd /home/ec2-user
+    
+    # Configurar banco de dados RDS
+    echo "Configurando banco de dados..."
+    
+    # Aguardar RDS estar disponível
+    sleep 60
+    
+    mysql -h ${aws_db_instance.rds.address} -P ${aws_db_instance.rds.port} -u ${var.db_username} -p${var.db_password} < /home/ec2-user/RESTful-API/database_desafio1.sql
+
+     echo "Atualizando config.py para RDS..."
+     cat > config.py << 'CONFIG_EOF'
+from app import app
+from flaskext.mysql import MySQL
+
+mysql = MySQL()
+app.config['MYSQL_DATABASE_USER'] = '${var.db_username}'
+app.config['MYSQL_DATABASE_PASSWORD'] = '${var.db_password}'
+app.config['MYSQL_DATABASE_DB'] = 'db_clientes'
+app.config['MYSQL_DATABASE_HOST'] = '${aws_db_instance.rds.address}'
+app.config['MYSQL_DATABASE_PORT'] = ${aws_db_instance.rds.port}
+
+mysql.init_app(app)
+CONFIG_EOF
+    
     sudo nohup python3 main.py --host=0.0.0.0 --port=80 > /var/log/clientes_api.log 2>&1 &
      
 EOF
