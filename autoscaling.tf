@@ -11,7 +11,7 @@ data "aws_ami" "amazon_linux" {
 resource "aws_launch_template" "app" {
   name_prefix   = "lt-app-"
   image_id      = data.aws_ami.amazon_linux.id
-  instance_type = var.app_instance_type
+  instance_type = "t3.micro"
 
   network_interfaces {
     security_groups            = [aws_security_group.app.id]
@@ -37,7 +37,7 @@ resource "aws_launch_template" "app" {
     # Aguardar RDS estar disponível
     sleep 60
     
-    mysql -h ${aws_db_instance.rds.address} -P ${aws_db_instance.rds.port} -u ${var.db_username} -p${var.db_password} < /home/ec2-user/RESTful-API/database_desafio1.sql
+    mysql -h ${aws_db_instance.rds.address} -P ${aws_db_instance.rds.port} -u admin -pcidade01 < /home/ec2-user/RESTful-API/database_desafio1.sql
 
      echo "Atualizando config.py para RDS..."
      cat > config.py << 'CONFIG_EOF'
@@ -45,8 +45,8 @@ from app import app
 from flaskext.mysql import MySQL
 
 mysql = MySQL()
-app.config['MYSQL_DATABASE_USER'] = '${var.db_username}'
-app.config['MYSQL_DATABASE_PASSWORD'] = '${var.db_password}'
+app.config['MYSQL_DATABASE_USER'] = 'admin'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'cidade01'
 app.config['MYSQL_DATABASE_DB'] = 'db_clientes'
 app.config['MYSQL_DATABASE_HOST'] = '${aws_db_instance.rds.address}'
 app.config['MYSQL_DATABASE_PORT'] = ${aws_db_instance.rds.port}
@@ -63,10 +63,10 @@ EOF
     resource_type = "instance"
     tags = {
       Name          = "app-server"
-      Owner         = var.owner_tag
-      AMBIENTE      = var.ambiente
-      RESPONSAVEL   = var.responsavel
-      SCHEDULE      = var.schedule
+      AMBIENTE      = "DEV"
+      RESPONSAVEL   = "artur.jorge@inmetrics.com.br"
+      SCHEDULE      = "online"
+      CENTRODECUSTO = "ADMPLATDIGITAL"
     }
   }
 }
@@ -80,32 +80,32 @@ resource "aws_autoscaling_group" "app" {
     id      = aws_launch_template.app.id
     version = "$Latest"
   }
-  vpc_zone_identifier       = [for s in aws_subnet.app : s.id]
+  vpc_zone_identifier       = [aws_subnet.app_1a.id, aws_subnet.app_1c.id]
   target_group_arns         = [aws_lb_target_group.app.arn]
   health_check_type         = "ELB"
   health_check_grace_period = 300
 
   tag {
-    key                 = "Owner"
-    value               = var.owner_tag
-    propagate_at_launch = true
-  }
-
-  tag {
     key                 = "AMBIENTE"
-    value               = var.ambiente
+    value               = "DEV"
     propagate_at_launch = true
   }
 
   tag {
     key                 = "RESPONSAVEL"
-    value               = var.responsavel
+    value               = "artur.jorge@inmetrics.com.br"
     propagate_at_launch = true
   }
 
   tag {
     key                 = "SCHEDULE"
-    value               = var.schedule
+    value               = "online"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "CENTRODECUSTO"
+    value               = "ADMPLATDIGITAL"
     propagate_at_launch = true
   }
 }

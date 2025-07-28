@@ -179,3 +179,11 @@ sudo tail -f /var/log/user-data.log
 # Logs do MySQL (se aplicável)
 sudo tail -f /var/log/mysqld.log
 ```
+
+## Próximos Passos
+
+1. ✅ Configurar banco de dados RDS
+2. ✅ Atualizar config.py
+3. 🔄 Verificar conexão
+4. 🧪 Testar endpoints da API
+5. 📊 Monitorar logs e performance 

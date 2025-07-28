@@ -2,11 +2,11 @@ resource "aws_lb" "app" {
   name               = "alb-app"
   internal           = false
   load_balancer_type = "application"
-  subnets            = [for s in aws_subnet.public : s.id]
+  subnets            = [aws_subnet.public_1a.id, aws_subnet.public_1c.id]
   security_groups    = [aws_security_group.alb.id]
 
   tags = {
-    Owner = var.owner_tag
+    Name = "alb-app"
   }
 }
 
@@ -25,8 +25,7 @@ resource "aws_lb_target_group" "app" {
   }
 
   tags = {
-    Owner = var.owner_tag
-    # CENTRODECUSTO removido intencionalmente
+    Name = "tg-app"
   }
 }
 
