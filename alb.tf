@@ -39,3 +39,7 @@ resource "aws_lb_listener" "app" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
+
+# AWS Load Balancer Controller para EKS
+# Nota: IAM roles e policies devem ser criados manualmente ou por um administrador
+# devido a restrições de permissão

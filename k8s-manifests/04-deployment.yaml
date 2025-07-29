@@ -19,7 +19,8 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: SEU_USUARIO_DOCKERHUB/flask-app:latest  # Substitua pelo seu usuário do Docker Hub
+        image: artur123231/flask-app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         env:
