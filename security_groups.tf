@@ -18,7 +18,7 @@ resource "aws_security_group" "alb" {
   }
 
   tags = {
-    Owner = var.owner_tag
+    Name = "alb-sg"
   }
 }
 
@@ -42,7 +42,7 @@ resource "aws_security_group" "app" {
   }
 
   tags = {
-    Owner = var.owner_tag
+    Name = "app-sg"
   }
 }
 
@@ -66,6 +66,6 @@ resource "aws_security_group" "rds" {
   }
 
   tags = {
-    Owner = var.owner_tag
+    Name = "rds-sg"
   }
 }

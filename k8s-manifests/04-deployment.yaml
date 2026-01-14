@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: flask-app
+  labels:
+    app: flask-app
+    environment: dev
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+        environment: dev
+    spec:
+      containers:
+      - name: flask-app
+        image: artur123231/flask-app:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        env:
+        - name: MYSQL_DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: flask-app-config
+              key: MYSQL_DATABASE_HOST
+        - name: MYSQL_DATABASE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: flask-app-config
+              key: MYSQL_DATABASE_PORT
+        - name: MYSQL_DATABASE_DB
+          valueFrom:
+            configMapKeyRef:
+              name: flask-app-config
+              key: MYSQL_DATABASE_DB
+        - name: MYSQL_DATABASE_USER
+          valueFrom:
+            configMapKeyRef:
+              name: flask-app-config
+              key: MYSQL_DATABASE_USER
+        - name: MYSQL_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: flask-app-secret
+              key: MYSQL_DATABASE_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5 

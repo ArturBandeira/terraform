@@ -2,11 +2,11 @@ resource "aws_lb" "app" {
   name               = "alb-app"
   internal           = false
   load_balancer_type = "application"
-  subnets            = [for s in aws_subnet.public : s.id]
+  subnets            = [aws_subnet.public_1a.id, aws_subnet.public_1c.id]
   security_groups    = [aws_security_group.alb.id]
 
   tags = {
-    Owner = var.owner_tag
+    Name = "alb-app"
   }
 }
 
@@ -25,8 +25,7 @@ resource "aws_lb_target_group" "app" {
   }
 
   tags = {
-    Owner = var.owner_tag
-    # CENTRODECUSTO removido intencionalmente
+    Name = "tg-app"
   }
 }
 
@@ -40,3 +39,7 @@ resource "aws_lb_listener" "app" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
+
+# AWS Load Balancer Controller para EKS
+# Nota: IAM roles e policies devem ser criados manualmente ou por um administrador
+# devido a restrições de permissão

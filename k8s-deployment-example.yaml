@@ -1,0 +1,188 @@
+---
+# Deployment para aplicação Flask
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: default
+  labels:
+    app: flask-app
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+        version: v1
+    spec:
+      containers:
+      - name: flask-app
+        image: seu-usuario/flask-app:latest
+        ports:
+        - containerPort: 5000
+          name: http
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: database-url
+        - name: FLASK_ENV
+          value: "production"
+        - name: FLASK_DEBUG
+          value: "false"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: app-config
+          mountPath: /app/config
+          readOnly: true
+      volumes:
+      - name: app-config
+        configMap:
+          name: app-config
+---
+# Service para expor a aplicação
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+  namespace: default
+  labels:
+    app: flask-app
+spec:
+  selector:
+    app: flask-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+      name: http
+  type: LoadBalancer
+---
+# ConfigMap para configurações da aplicação
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+data:
+  app.py: |
+    from flask import Flask, jsonify
+    import os
+    import psycopg2
+    from datetime import datetime
+    
+    app = Flask(__name__)
+    
+    # Configuração do banco de dados
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    
+    @app.route('/')
+    def home():
+        return jsonify({
+            'message': 'Aplicação Flask rodando no EKS!',
+            'timestamp': datetime.now().isoformat(),
+            'pod': os.getenv('HOSTNAME', 'unknown')
+        })
+    
+    @app.route('/health')
+    def health():
+        return jsonify({'status': 'healthy'})
+    
+    @app.route('/db-test')
+    def db_test():
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = conn.cursor()
+            cursor.execute('SELECT version();')
+            version = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return jsonify({
+                'status': 'success',
+                'database_version': version[0] if version else 'unknown'
+            })
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': str(e)
+            }), 500
+    
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=5000)
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: flask-app-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: flask-app
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+# Ingress para roteamento (opcional - requer controller de ingress)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flask-app-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/target-type: "ip"
+spec:
+  rules:
+  - host: app.example.com  # Substitua pelo seu domínio
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-app-service
+            port:
+              number: 80 

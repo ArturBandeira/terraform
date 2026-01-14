@@ -1,23 +1,21 @@
 resource "aws_db_subnet_group" "db" {
   name       = "db-subnet-group"
-  subnet_ids = [for s in aws_subnet.db : s.id]
+  subnet_ids = [aws_subnet.app_1a.id, aws_subnet.app_1c.id]
   description = "DB subnet group for Multi-AZ"
 
   tags = {
-    Owner = var.owner_tag
-    # CENTRODECUSTO removido intencionalmente
+    Name = "db-subnet-group"
   }
 }
 
 resource "aws_db_instance" "rds" {
   identifier             = "rds-mysql-app"
-  allocated_storage      = var.db_allocated_storage
+  allocated_storage      = 20
   engine                 = "mysql"
   engine_version         = "8.0"
-  instance_class         = var.db_instance_class
-  name                   = var.db_name
-  username               = var.db_username
-  password               = var.db_password
+  instance_class         = "db.t3.micro"
+  username               = "admin"
+  password               = "cidade01"
   multi_az               = true
   publicly_accessible    = false
   db_subnet_group_name   = aws_db_subnet_group.db.name
@@ -25,8 +23,7 @@ resource "aws_db_instance" "rds" {
   skip_final_snapshot    = true
 
   tags = {
-    Owner = var.owner_tag
-    # CENTRODECUSTO removido intencionalmente
+    Name = "rds-mysql-app"
   }
 
   timeouts {
